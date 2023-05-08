@@ -79,14 +79,17 @@ def training_loop(
             images = torch.zeros([batch_gpu, net.img_channels, net.img_resolution, net.img_resolution], device=device)
             sigma = torch.ones([batch_gpu], device=device)
             labels = torch.zeros([batch_gpu, net.label_dim], device=device)
-            misc.print_module_summary(net, [images, sigma, labels], max_nesting=2)
+            # TODO
+            misc.print_module_summary(net, [images, images, sigma, labels], max_nesting=2)
 
     # Setup optimizer.
     dist.print0('Setting up optimizer...')
     loss_fn = dnnlib.util.construct_class_by_name(**loss_kwargs) # training.loss.(VP|VE|EDM)Loss
     optimizer = dnnlib.util.construct_class_by_name(params=net.parameters(), **optimizer_kwargs) # subclass of torch.optim.Optimizer
     augment_pipe = dnnlib.util.construct_class_by_name(**augment_kwargs) if augment_kwargs is not None else None # training.augment.AugmentPipe
-    ddp = torch.nn.parallel.DistributedDataParallel(net, device_ids=[device], broadcast_buffers=False)
+    # TODO
+    ddp = torch.nn.parallel.DistributedDataParallel(net, device_ids=[device], broadcast_buffers=False, find_unused_parameters=True)
+
     ema = copy.deepcopy(net).eval().requires_grad_(False)
 
     # Resume training from previous snapshot.
@@ -122,6 +125,10 @@ def training_loop(
 
         # Accumulate gradients.
         optimizer.zero_grad(set_to_none=True)
+
+        # TODO
+        rec_loss = 0
+
         for round_idx in range(num_accumulation_rounds):
             with misc.ddp_sync(ddp, (round_idx == num_accumulation_rounds - 1)):
                 images, labels = next(dataset_iterator)

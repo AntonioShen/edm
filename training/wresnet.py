@@ -5,7 +5,7 @@ import numpy as np
 from torch_utils import persistence
 
 
-# DO NOT USE THIS CLASS
+# DO NOT USE THIS CLASS, IT HAS BEEN MODIFIED TO BE COMPATIBLE WITH THE DIFFUSION MODEL IN NETWORKS.PY
 @persistence.persistent_class
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
