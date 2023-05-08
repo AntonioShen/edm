@@ -49,13 +49,19 @@ class VELoss:
         self.sigma_max = sigma_max
 
     def __call__(self, net, images, labels, augment_pipe=None):
+        # (np.arange(granularity+1) / granularity)
         rnd_uniform = torch.rand([images.shape[0], 1, 1, 1], device=images.device)
+        # The input to E(xo, t) but without FT
         sigma = self.sigma_min * ((self.sigma_max / self.sigma_min) ** rnd_uniform)
         weight = 1 / sigma ** 2
         y, augment_labels = augment_pipe(images) if augment_pipe is not None else (images, None)
         n = torch.randn_like(y) * sigma
-        D_yn = net(y + n, sigma, labels, augment_labels=augment_labels)
-        loss = weight * ((D_yn - y) ** 2)
+
+        # net() is e.g. VEPrecond
+        # TODO
+        D_yn, z = net(images, y + n, sigma, labels, augment_labels=augment_labels)
+        loss = weight * ((D_yn - y) ** 2).mean() + torch.mean(torch.sum(torch.abs(z), dim=-1))
+
         return loss
 
 #----------------------------------------------------------------------------
